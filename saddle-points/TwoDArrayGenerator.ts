@@ -6,7 +6,7 @@ export default class TwoDArrayGenerator {
 
     }
 
-    makeRandom(size: number = 5) {
+    makeRandom() {
         for (let i = 0; i < this.size; i++) {
             let arr = [];
             for (let j = 0; j < this.size; j++) {
@@ -17,14 +17,22 @@ export default class TwoDArrayGenerator {
         return this
     }
 
-    makeConstant(size: number = 5) {
+    makeConstant() {
         let x = 0;
-        for (let i = 0; i < size; i++) {
+        for (let i = 0; i < this.size; i++) {
             let arr = [];
-            for (let j = 0; j < size; j++) {
+            for (let j = 0; j < this.size; j++) {
                 arr[j] = ++x;
             }
             this.array[i] = arr;
+        }
+        return this
+    }
+
+    fromString(str: string) {
+        const rows = str.split('\n');
+        for (const c of rows) {
+            this.array.push(c.split('\t').map(x=>parseInt(x)))
         }
         return this
     }
@@ -36,7 +44,7 @@ export default class TwoDArrayGenerator {
 
     findMaxesInRow(row: number): Index[] {
         let maxes: Index[] = [];
-        let maxNum = this.from;
+        let maxNum = this.from - 1;
         for (let i = 0; i < this.array[row].length; i++)
         {
             if (this.array[row][i] == maxNum) {
@@ -44,6 +52,7 @@ export default class TwoDArrayGenerator {
             }
             else if (this.array[row][i] > maxNum) {
                 maxes = [i]
+                maxNum = this.array[row][i]
             }
         }
         return maxes;
@@ -64,10 +73,8 @@ export default class TwoDArrayGenerator {
         for (let i = 0; i < this.array.length; i++) {
             const maxIdxsAtRow = this.findMaxesInRow(i);
             for (const colIdx of maxIdxsAtRow) {
-                for(let j = 0; j < this.array[i].length; j++) {
-                    if (this.checkIsMinAtColumn(colIdx, j)) {
-                        saddlePoints.push([colIdx, j])
-                    }
+                if (this.checkIsMinAtColumn(colIdx, i)) {
+                    saddlePoints.push([colIdx, i])
                 }
             }
         }
@@ -77,7 +84,7 @@ export default class TwoDArrayGenerator {
     print(): void {
         let strings = [];
         for (const x of this.array) {
-            strings.push(x.join(','));
+            strings.push(x.join('\t'));
         }
         console.log(strings.join('\n'));
     }
