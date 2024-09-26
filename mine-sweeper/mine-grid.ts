@@ -6,7 +6,7 @@ export default class MineGrid {
             throw new Error('Mine probability can\'t be 1.');
         }
         for (let i = 0; i < heights; i ++) {
-            this.grid.push(new Uint8Array(8));
+            this.grid.push(new Uint8Array(width));
         }
     }
 
@@ -77,24 +77,27 @@ export default class MineGrid {
         this.visit();
     }
 
-    static deserialize(str: string): MineGrid {
-        const result = str.match(/.*\n/g);
-        if (!result)
-            throw new MalformedGridStringException('The string should have new line characters (\\n).');
-        const grid = new MineGrid(result[0].length - 1, result.length);
-        for (let i = 0; i < result.length; i++) {
-            for (let j = 0; j < result[i].length - 1; j++) {
-                let cell = parseInt(result[i][j]);
-                if (isNaN(cell)) throw new MalformedGridStringException(`Grid cell [${j},${i}] is not a number.`);
-                if (cell > 7) throw new MalformedGridStringException('A value of a cell can\'t be greater than 7.');
-                if (cell & 4) {
-                    cell &= ~4;
-                    grid.playerLocation = [j, i]
+    toString() {
+        let s = "";
+        for(let i = 0; i < this.grid.length; i ++) {
+            for(let j = 0; j < this.grid[i].length; j ++) {
+                const cell = this.grid[i][j];
+                if (this.playerLocation[0] === j && this.playerLocation[1] === i) {
+                    s += 'O';
                 }
-                grid.grid[i][j] = cell
+                else if (cell === 1 || cell === 0) {
+                    s += '.';
+                }
+                else if (cell === 2) {
+                    s += 'o';
+                }
+                else if (cell === 3) {
+                    s += '*';
+                }
             }
+            s += '\n';
         }
-        return grid
+        return s;
     }
 
     getGridMines(): boolean[][] {
@@ -109,34 +112,45 @@ export default class MineGrid {
         return g;
     }
 
+    private tryMoveAndVisit(tmpPos: number[]): void {
+        this.visit(tmpPos);
+        if (this.grid[tmpPos[1]][tmpPos[0]] !== 3)
+            this.playerLocation = tmpPos;
+        else
+            throw new MineException('mine')
+    }
+
     moveRight(): number[] {
         if (this.playerLocation[0] < this.grid[0].length - 1) {
-            this.playerLocation[0] = this.playerLocation[0] + 1;
-            this.visit();
+            const tmpPos = [this.playerLocation[0] + 1, this.playerLocation[1]];
+            this.tryMoveAndVisit(tmpPos);
         }
         return this.playerLocation;
     }
 
     moveLeft(): number[] {
         if (this.playerLocation[0] > 0) {
-            this.playerLocation[0] = this.playerLocation[0] - 1;
-            this.visit();
+            const tmpPos = [this.playerLocation[0] - 1, this.playerLocation[1]];
+            this.tryMoveAndVisit(tmpPos);
         }
         return this.playerLocation;
     }
 
     moveUp(): number[] {
         if (this.playerLocation[1] > 0) {
-            this.playerLocation[1] = this.playerLocation[1] - 1;
-            this.visit();
+            const tmpPos = [this.playerLocation[0], this.playerLocation[1] - 1];
+            this.tryMoveAndVisit(tmpPos);
+        }
+        if (this.playerLocation[1] == 0) {
+            throw new WinException();
         }
         return this.playerLocation;
     }
 
     moveDown(): number[] {
         if (this.playerLocation[1] < this.grid.length - 1) {
-            this.playerLocation[1] = this.playerLocation[1] + 1;
-            this.visit();
+            const tmpPos = [this.playerLocation[0], this.playerLocation[1] + 1];
+            this.tryMoveAndVisit(tmpPos);
         }
         return this.playerLocation;
     }
@@ -164,6 +178,26 @@ export default class MineGrid {
         }
         return s;
     }
+
+    static deserialize(str: string): MineGrid {
+        const result = str.match(/.*\n/g);
+        if (!result)
+            throw new MalformedGridStringException('The string should have new line characters (\\n).');
+        const grid = new MineGrid(result[0].length - 1, result.length);
+        for (let i = 0; i < result.length; i++) {
+            for (let j = 0; j < result[i].length - 1; j++) {
+                let cell = parseInt(result[i][j]);
+                if (isNaN(cell)) throw new MalformedGridStringException(`Grid cell [${j},${i}] is not a number.`);
+                if (cell > 7) throw new MalformedGridStringException('A value of a cell can\'t be greater than 7.');
+                if (cell & 4) {
+                    cell &= ~4;
+                    grid.playerLocation = [j, i]
+                }
+                grid.grid[i][j] = cell
+            }
+        }
+        return grid
+    }
 }
 
 export class NoPlaceForPlayerAtBottomRowException extends Error{
@@ -171,5 +205,13 @@ export class NoPlaceForPlayerAtBottomRowException extends Error{
 }
 
 export class MalformedGridStringException extends Error{
+
+}
+
+export class MineException extends Error{
+
+}
+
+export class WinException extends Error{
 
 }

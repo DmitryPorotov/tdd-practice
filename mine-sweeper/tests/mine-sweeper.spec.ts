@@ -62,7 +62,7 @@ describe('mine sweeper game', () => {
 describe("mine sweeper movement", () => {
     let mineGrid: MineGrid;
     beforeEach(() => {
-        mineGrid = new MineGrid(8, 8, 0.4);
+        mineGrid = new MineGrid(8, 8, 0.5);
         mineGrid.initMines();
         while (true) {
             try {
